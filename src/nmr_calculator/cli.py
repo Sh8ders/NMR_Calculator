@@ -4,6 +4,7 @@ from pathlib import Path
 
 import typer
 
+from nmr_calculator.database import load_shift_database_csv, save_database_cache
 from nmr_calculator.molecule import (
     get_hydrogen_bearing_atoms,
     get_proton_environment_groups,
@@ -24,6 +25,13 @@ def _method_option() -> str:
 
 def _raise_cli_error(error: NotImplementedError | ValueError) -> None:
     raise typer.BadParameter(str(error)) from error
+
+
+def _load_database_or_raise(path: str):
+    try:
+        return load_shift_database_csv(path)
+    except ValueError as error:
+        _raise_cli_error(error)
 
 
 @app.callback()
@@ -169,6 +177,33 @@ def report(
         "report_txt",
     ]:
         typer.echo(f"- {Path(paths[key]).name}")
+
+
+@app.command()
+def database_check(path: str) -> None:
+    """Validate a local 1H NMR shift database CSV."""
+    database = _load_database_or_raise(path)
+    shift_min = database["shift_ppm"].min()
+    shift_max = database["shift_ppm"].max()
+
+    typer.echo(f"Loaded database: {path}")
+    typer.echo(f"Records: {len(database)}")
+    typer.echo(f"Unique molecules: {database['smiles'].nunique()}")
+    typer.echo(f"Shift range: {shift_min:g}-{shift_max:g} ppm")
+    typer.echo("Database validation passed.")
+
+
+@app.command()
+def database_cache(
+    path: str,
+    output: str = typer.Option(..., "--output", "-o", help="Cache output CSV path."),
+) -> None:
+    """Validate and save a normalized 1H NMR shift database cache."""
+    database = _load_database_or_raise(path)
+    saved_path = save_database_cache(database, output)
+
+    typer.echo(f"Loaded database: {path}")
+    typer.echo(f"Saved normalized database cache to {saved_path}")
 
 
 if __name__ == "__main__":

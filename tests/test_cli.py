@@ -171,3 +171,36 @@ def test_predict_command_shows_hybrid_placeholder_message():
 
     assert result.exit_code != 0
     assert "Hybrid prediction is not implemented yet" in result.output
+
+
+def test_database_check_command_validates_fixture():
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app, ["database-check", "tests/fixtures/test_1h_shift_database.csv"]
+    )
+
+    assert result.exit_code == 0
+    assert "Records: 6" in result.output
+    assert "Unique molecules: 3" in result.output
+    assert "Database validation passed." in result.output
+
+
+def test_database_cache_command_writes_cache(tmp_path):
+    runner = CliRunner()
+    cache_path = tmp_path / "test_cache.csv"
+
+    result = runner.invoke(
+        app,
+        [
+            "database-cache",
+            "tests/fixtures/test_1h_shift_database.csv",
+            "--output",
+            str(cache_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Saved normalized database cache" in result.output
+    assert cache_path.exists()
+    assert cache_path.stat().st_size > 0

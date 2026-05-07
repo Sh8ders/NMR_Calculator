@@ -2,17 +2,17 @@
 
 NMR Calculator is a Python project for future 1H NMR, proton NMR, and hydrogen NMR spectrum prediction from molecular structures.
 
-## Phase 10 Status
+## Phase 11 Status
 
-Phase 10 refactors prediction behind a clean predictor interface. The project now has a rule-based predictor implementation plus placeholder database and hybrid predictor classes for future nmrshiftdb2 work.
+Phase 11 adds local 1H NMR shift database loading, validation, normalization, and CSV caching. This prepares the project for future nmrshiftdb2-style database prediction, but it does not perform database matching or replace the rule-based predictor yet.
 
-Prediction methods:
+Supported local CSV schema:
 
-- `rules`: current supported rule-based predictor
-- `database`: placeholder for future nmrshiftdb2 database prediction
-- `hybrid`: placeholder for future database-first prediction with rule fallback
+```text
+smiles,molecule_name,atom_index,shift_ppm,assignment_label,source
+```
 
-Database and hybrid modes are not implemented yet. nmrshiftdb2 support will be added in a later phase. Current predictions remain approximate rule-based estimates.
+The loader validates required columns, atom index types, numeric shifts, and parseable SMILES. nmrshiftdb2 SDF parsing and true database matching will come later.
 
 ## Installation
 
@@ -45,7 +45,19 @@ python -m pip install rdkit
 
 ## Run the CLI
 
-Use the current rule-based predictor explicitly:
+Validate a local shift database CSV:
+
+```bash
+python -m nmr_calculator.cli database-check tests/fixtures/test_1h_shift_database.csv
+```
+
+Create a normalized database cache:
+
+```bash
+python -m nmr_calculator.cli database-cache tests/fixtures/test_1h_shift_database.csv --output data/processed/test_cache.csv
+```
+
+Use the current rule-based predictor:
 
 ```bash
 python -m nmr_calculator.cli predict "CCO" --method rules
@@ -54,17 +66,7 @@ python -m nmr_calculator.cli plot "CCO" --output ethanol_1h_nmr.png --method rul
 python -m nmr_calculator.cli report "CCO" --output-dir reports/ethanol --method rules
 ```
 
-The default method is `rules`, so existing commands still work without `--method`.
-
-Other useful commands:
-
-```bash
-python -m nmr_calculator.cli molecule-image "CCO" --output ethanol_structure.png
-python -m nmr_calculator.cli inspect "CCO"
-python -m nmr_calculator.cli groups "CCO"
-```
-
-Generated reports and PNGs should usually not be committed.
+Generated reports, processed data caches, and PNGs should usually not be committed.
 
 ## Run Tests
 
