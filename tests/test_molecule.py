@@ -2,6 +2,7 @@ import pytest
 
 from nmr_calculator.molecule import (
     get_hydrogen_bearing_atoms,
+    get_proton_environment_groups,
     label_proton_environment,
     parse_molecule,
     prepare_molecule,
@@ -57,3 +58,56 @@ def test_label_proton_environment_handles_atom_without_hydrogens():
     mol = prepare_molecule("CC(=O)C")
 
     assert label_proton_environment(mol, 1) == "unknown proton environment"
+
+
+def test_ethanol_has_three_proton_environment_groups():
+    mol = prepare_molecule("CCO")
+    groups = get_proton_environment_groups(mol)
+
+    assert len(groups) == 3
+    assert sum(group["proton_count"] for group in groups) == 6
+    assert _find_group(groups, "alkyl CH3")["proton_count"] == 3
+    assert _find_group(groups, "heteroatom-adjacent alkyl proton")[
+        "proton_count"
+    ] == 2
+
+    exchangeable_group = _find_group(
+        groups, "alcohol/amine/thiol exchangeable proton"
+    )
+    assert exchangeable_group["proton_count"] == 1
+    assert exchangeable_group["is_exchangeable"] is True
+
+
+def test_benzene_has_one_aromatic_proton_environment_group():
+    mol = prepare_molecule("c1ccccc1")
+    groups = get_proton_environment_groups(mol)
+
+    assert len(groups) == 1
+    assert groups[0]["proton_count"] == 6
+    assert groups[0]["is_aromatic"] is True
+    assert groups[0]["environment_label"] == "aromatic proton"
+
+
+def test_acetone_has_one_methyl_proton_environment_group():
+    mol = prepare_molecule("CC(=O)C")
+    groups = get_proton_environment_groups(mol)
+
+    assert len(groups) == 1
+    assert groups[0]["proton_count"] == 6
+    assert "alkyl CH3" in groups[0]["environment_label"]
+
+
+def test_toluene_groups_include_methyl_and_aromatic_protons():
+    mol = prepare_molecule("Cc1ccccc1")
+    groups = get_proton_environment_groups(mol)
+    labels = {group["environment_label"] for group in groups}
+
+    assert "alkyl CH3" in labels
+    assert "aromatic proton" in labels
+    assert _find_group(groups, "alkyl CH3")["proton_count"] == 3
+
+
+def _find_group(groups, environment_label):
+    return next(
+        group for group in groups if group["environment_label"] == environment_label
+    )

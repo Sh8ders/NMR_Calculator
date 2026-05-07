@@ -2,11 +2,11 @@
 
 NMR Calculator is a Python project for future 1H NMR, proton NMR, and hydrogen NMR spectrum prediction from molecular structures.
 
-## Phase 2 Status
+## Phase 3 Status
 
-Phase 2 adds RDKit-based molecule parsing from SMILES, explicit hydrogen preparation, hydrogen-bearing atom inspection, and basic proton environment labels.
+Phase 3 groups equivalent or chemically similar proton environments for later 1H NMR prediction. The project can now parse SMILES with RDKit, add explicit hydrogens, inspect hydrogen-bearing atoms, and group proton environments using RDKit symmetry classes plus simple local environment descriptors.
 
-This phase does not predict proton chemical shifts yet.
+This phase does not predict proton chemical shifts or generate spectra yet.
 
 ## Installation
 
@@ -39,34 +39,34 @@ python -m pip install rdkit
 
 ## Run the CLI
 
-Check Phase 2 prediction readiness:
+Check Phase 3 readiness:
 
 ```bash
 python -m nmr_calculator.cli predict "CCO"
 ```
 
-Expected Phase 2 output:
-
-```text
-Input SMILES: CCO
-Phase 2 molecule parsing ready.
-1H NMR prediction will be implemented in later phases.
-```
-
-Inspect proton environments:
+Inspect proton-bearing atoms:
 
 ```bash
 python -m nmr_calculator.cli inspect "CCO"
 ```
 
-Example output:
+Group equivalent proton environments:
+
+```bash
+python -m nmr_calculator.cli groups "CCO"
+python -m nmr_calculator.cli groups "c1ccccc1"
+python -m nmr_calculator.cli groups "CC(=O)C"
+```
+
+Example ethanol group output:
 
 ```text
 Input SMILES: CCO
-Hydrogen-bearing atoms:
-  Atom 0 (CH3): alkyl CH3
-  Atom 1 (CH2): heteroatom-adjacent alkyl proton
-  Atom 2 (OH1): alcohol/amine/thiol exchangeable proton
+Proton environment groups:
+  Group 1: atoms [0], 3H, alkyl CH3
+  Group 2: atoms [1], 2H, heteroatom-adjacent alkyl proton
+  Group 3: atoms [2], 1H, alcohol/amine/thiol exchangeable proton
 ```
 
 ## Run Tests
