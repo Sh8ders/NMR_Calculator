@@ -19,6 +19,15 @@ def test_predict_command_reports_rule_based_shifts():
     assert old_carbon_nmr_phrase not in result.output
 
 
+def test_predict_command_accepts_rules_method():
+    runner = CliRunner()
+
+    result = runner.invoke(app, ["predict", "CCO", "--method", "rules"])
+
+    assert result.exit_code == 0
+    assert "Predicted 1H NMR chemical shifts:" in result.output
+
+
 def test_inspect_command_reports_proton_environments():
     runner = CliRunner()
 
@@ -59,6 +68,15 @@ def test_peaks_command_reports_predicted_peak_list():
     assert "1H" in result.output
 
 
+def test_peaks_command_accepts_rules_method():
+    runner = CliRunner()
+
+    result = runner.invoke(app, ["peaks", "CCO", "--method", "rules"])
+
+    assert result.exit_code == 0
+    assert "Predicted 1H NMR peak list:" in result.output
+
+
 def test_plot_command_saves_predicted_spectrum(tmp_path):
     runner = CliRunner()
     output_path = tmp_path / "ethanol_1h_nmr.png"
@@ -72,6 +90,19 @@ def test_plot_command_saves_predicted_spectrum(tmp_path):
     assert "Saved predicted 1H NMR spectrum" in result.output
     assert output_path.exists()
     assert output_path.stat().st_size > 0
+
+
+def test_plot_command_accepts_rules_method(tmp_path):
+    runner = CliRunner()
+    output_path = tmp_path / "ethanol_1h_nmr.png"
+
+    result = runner.invoke(
+        app, ["plot", "CCO", "--output", str(output_path), "--method", "rules"]
+    )
+
+    assert result.exit_code == 0
+    assert "Saved predicted 1H NMR spectrum" in result.output
+    assert output_path.exists()
 
 
 def test_molecule_image_command_saves_png(tmp_path):
@@ -109,3 +140,34 @@ def test_report_command_generates_report_files(tmp_path):
     ]:
         assert filename in result.output
         assert (output_dir / filename).exists()
+
+
+def test_report_command_accepts_rules_method(tmp_path):
+    runner = CliRunner()
+    output_dir = tmp_path / "ethanol_report"
+
+    result = runner.invoke(
+        app, ["report", "CCO", "--output-dir", str(output_dir), "--method", "rules"]
+    )
+
+    assert result.exit_code == 0
+    assert "Generated 1H NMR report" in result.output
+    assert (output_dir / "report.txt").exists()
+
+
+def test_predict_command_shows_database_placeholder_message():
+    runner = CliRunner()
+
+    result = runner.invoke(app, ["predict", "CCO", "--method", "database"])
+
+    assert result.exit_code != 0
+    assert "Database prediction is not implemented yet" in result.output
+
+
+def test_predict_command_shows_hybrid_placeholder_message():
+    runner = CliRunner()
+
+    result = runner.invoke(app, ["predict", "CCO", "--method", "hybrid"])
+
+    assert result.exit_code != 0
+    assert "Hybrid prediction is not implemented yet" in result.output

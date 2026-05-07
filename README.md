@@ -2,13 +2,17 @@
 
 NMR Calculator is a Python project for future 1H NMR, proton NMR, and hydrogen NMR spectrum prediction from molecular structures.
 
-## Phase 9 Status
+## Phase 10 Status
 
-Phase 9 improves the rule-based 1H NMR predictor with better functional group and proton environment detection. The current rules distinguish simple alkyl, heteroatom-adjacent, alpha-to-carbonyl, benzylic, allylic, vinylic, aromatic, aldehyde, terminal alkyne, alcohol, amine, thiol, and carboxylic acid proton environments.
+Phase 10 refactors prediction behind a clean predictor interface. The project now has a rule-based predictor implementation plus placeholder database and hybrid predictor classes for future nmrshiftdb2 work.
 
-Predictions are still approximate rule-based estimates. Database prediction, ML prediction, nmrshiftdb2 support, improved multiplicity, and true spin-spin splitting are not implemented yet.
+Prediction methods:
 
-The existing workflow still supports prediction tables, peak lists, spectrum PNGs, molecule PNGs, and complete report folders.
+- `rules`: current supported rule-based predictor
+- `database`: placeholder for future nmrshiftdb2 database prediction
+- `hybrid`: placeholder for future database-first prediction with rule fallback
+
+Database and hybrid modes are not implemented yet. nmrshiftdb2 support will be added in a later phase. Current predictions remain approximate rule-based estimates.
 
 ## Installation
 
@@ -41,25 +45,20 @@ python -m pip install rdkit
 
 ## Run the CLI
 
-Try improved rule-based predictions:
+Use the current rule-based predictor explicitly:
 
 ```bash
-python -m nmr_calculator.cli predict "Cc1ccccc1"
-python -m nmr_calculator.cli predict "CC=O"
-python -m nmr_calculator.cli predict "CC(=O)O"
+python -m nmr_calculator.cli predict "CCO" --method rules
+python -m nmr_calculator.cli peaks "CCO" --method rules
+python -m nmr_calculator.cli plot "CCO" --output ethanol_1h_nmr.png --method rules
+python -m nmr_calculator.cli report "CCO" --output-dir reports/ethanol --method rules
 ```
 
-Generate a complete report folder:
-
-```bash
-python -m nmr_calculator.cli report "Cc1ccccc1" --output-dir reports/toluene
-```
+The default method is `rules`, so existing commands still work without `--method`.
 
 Other useful commands:
 
 ```bash
-python -m nmr_calculator.cli peaks "CCO"
-python -m nmr_calculator.cli plot "CCO" --output ethanol_1h_nmr.png
 python -m nmr_calculator.cli molecule-image "CCO" --output ethanol_structure.png
 python -m nmr_calculator.cli inspect "CCO"
 python -m nmr_calculator.cli groups "CCO"

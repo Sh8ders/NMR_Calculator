@@ -2,7 +2,7 @@
 
 import pandas as pd
 
-from nmr_calculator.predictor import predict_1h_shifts
+from nmr_calculator.predictor import get_predictor
 
 
 def generate_peak_list(predictions: pd.DataFrame) -> pd.DataFrame:
@@ -51,9 +51,9 @@ def generate_peak_list(predictions: pd.DataFrame) -> pd.DataFrame:
     return peak_list
 
 
-def generate_1h_peak_list(smiles: str) -> pd.DataFrame:
+def generate_1h_peak_list(smiles: str, method: str = "rules") -> pd.DataFrame:
     """Generate a predicted 1H NMR peak list from a SMILES string."""
-    predictions = predict_1h_shifts(smiles)
+    predictions = get_predictor(method).predict(smiles)
     return generate_peak_list(predictions)
 
 

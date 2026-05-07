@@ -26,24 +26,82 @@ class ShiftRule(NamedTuple):
     notes: str
 
 
-def predict_proton_shift_for_group(mol: Mol, group: dict) -> dict:
-    """Predict an approximate 1H NMR shift for a proton environment group."""
-    rule = get_shift_rule_for_group(mol, group)
-    return {
-        "group_id": group["group_id"],
-        "atom_indices": group["atom_indices"],
-        "proton_count": group["proton_count"],
-        "environment_label": group["environment_label"],
-        "predicted_shift_ppm": rule.predicted_shift_ppm,
-        "shift_range_ppm": rule.shift_range_ppm,
-        "confidence": rule.confidence,
-        "prediction_method": "phase_9_rule_based",
-        "notes": rule.notes,
-    }
+class BaseProtonPredictor:
+    """Base interface for 1H NMR proton shift predictors."""
+
+    name = "base"
+
+    def predict(self, smiles: str) -> pd.DataFrame:
+        """Predict 1H NMR shifts for a SMILES string."""
+        raise NotImplementedError
+
+
+class RuleBasedProtonPredictor(BaseProtonPredictor):
+    """Rule-based 1H NMR proton shift predictor."""
+
+    name = "rules"
+
+    def predict(self, smiles: str) -> pd.DataFrame:
+        """Predict approximate 1H NMR shifts using local rules."""
+        return _predict_1h_shifts_with_rules(smiles)
+
+
+class DatabaseProtonPredictor(BaseProtonPredictor):
+    """Placeholder for future nmrshiftdb2 database prediction."""
+
+    name = "database"
+
+    def predict(self, smiles: str) -> pd.DataFrame:
+        """Raise until database prediction is implemented."""
+        raise NotImplementedError(
+            "Database prediction is not implemented yet. "
+            "It will be added in the nmrshiftdb2 phase."
+        )
+
+
+class HybridProtonPredictor(BaseProtonPredictor):
+    """Placeholder for future database-first hybrid prediction."""
+
+    name = "hybrid"
+
+    def predict(self, smiles: str) -> pd.DataFrame:
+        """Raise until hybrid prediction is implemented."""
+        raise NotImplementedError(
+            "Hybrid prediction is not implemented yet. "
+            "It will be added after database prediction."
+        )
+
+
+SUPPORTED_PREDICTION_METHODS = {
+    "rules": RuleBasedProtonPredictor,
+    "rule": RuleBasedProtonPredictor,
+    "rule-based": RuleBasedProtonPredictor,
+    "database": DatabaseProtonPredictor,
+    "db": DatabaseProtonPredictor,
+    "hybrid": HybridProtonPredictor,
+}
+
+
+def get_predictor(method: str) -> BaseProtonPredictor:
+    """Return a proton predictor for a supported method string."""
+    normalized_method = method.strip().lower()
+    predictor_class = SUPPORTED_PREDICTION_METHODS.get(normalized_method)
+    if predictor_class is None:
+        supported_methods = ", ".join(sorted(SUPPORTED_PREDICTION_METHODS))
+        raise ValueError(
+            f"Unknown prediction method: {method!r}. "
+            f"Supported methods: {supported_methods}."
+        )
+    return predictor_class()
 
 
 def predict_1h_shifts(smiles: str) -> pd.DataFrame:
     """Predict approximate 1H NMR shifts for grouped proton environments."""
+    return RuleBasedProtonPredictor().predict(smiles)
+
+
+def _predict_1h_shifts_with_rules(smiles: str) -> pd.DataFrame:
+    """Predict approximate 1H NMR shifts with the rule-based implementation."""
     mol = prepare_molecule(smiles)
     predictions = [
         predict_proton_shift_for_group(mol, group)
@@ -83,6 +141,22 @@ def predict_1h_shifts(smiles: str) -> pd.DataFrame:
             "notes",
         ],
     )
+
+
+def predict_proton_shift_for_group(mol: Mol, group: dict) -> dict:
+    """Predict an approximate 1H NMR shift for a proton environment group."""
+    rule = get_shift_rule_for_group(mol, group)
+    return {
+        "group_id": group["group_id"],
+        "atom_indices": group["atom_indices"],
+        "proton_count": group["proton_count"],
+        "environment_label": group["environment_label"],
+        "predicted_shift_ppm": rule.predicted_shift_ppm,
+        "shift_range_ppm": rule.shift_range_ppm,
+        "confidence": rule.confidence,
+        "prediction_method": "phase_9_rule_based",
+        "notes": rule.notes,
+    }
 
 
 def get_shift_rule_for_group(mol: Mol, group: dict) -> ShiftRule:

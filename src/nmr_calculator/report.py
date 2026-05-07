@@ -5,17 +5,19 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 
 from nmr_calculator.plotting import plot_1h_spectrum
-from nmr_calculator.predictor import predict_1h_shifts
+from nmr_calculator.predictor import get_predictor
 from nmr_calculator.spectrum import format_peak_label, generate_peak_list
 from nmr_calculator.visualization import save_molecule_image
 
 
-def generate_1h_report(smiles: str, output_dir: str) -> dict[str, str]:
+def generate_1h_report(
+    smiles: str, output_dir: str, method: str = "rules"
+) -> dict[str, str]:
     """Generate a complete 1H NMR report folder for a SMILES string."""
     report_dir = Path(output_dir)
     report_dir.mkdir(parents=True, exist_ok=True)
 
-    predictions = predict_1h_shifts(smiles)
+    predictions = get_predictor(method).predict(smiles)
     peak_list = generate_peak_list(predictions)
 
     predictions_csv = report_dir / "predictions.csv"

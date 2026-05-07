@@ -1,6 +1,41 @@
 import pytest
 
-from nmr_calculator.predictor import predict_1h_shifts
+from nmr_calculator.predictor import (
+    DatabaseProtonPredictor,
+    HybridProtonPredictor,
+    RuleBasedProtonPredictor,
+    get_predictor,
+    predict_1h_shifts,
+)
+
+
+def test_get_predictor_returns_expected_predictor_classes():
+    assert isinstance(get_predictor("rules"), RuleBasedProtonPredictor)
+    assert isinstance(get_predictor("rule"), RuleBasedProtonPredictor)
+    assert isinstance(get_predictor("rule-based"), RuleBasedProtonPredictor)
+    assert isinstance(get_predictor("database"), DatabaseProtonPredictor)
+    assert isinstance(get_predictor("db"), DatabaseProtonPredictor)
+    assert isinstance(get_predictor("hybrid"), HybridProtonPredictor)
+
+
+def test_get_predictor_rejects_unknown_method():
+    with pytest.raises(ValueError, match="Supported methods"):
+        get_predictor("not-real")
+
+
+def test_placeholder_predictors_raise_not_implemented():
+    with pytest.raises(NotImplementedError, match="Database prediction"):
+        DatabaseProtonPredictor().predict("CCO")
+
+    with pytest.raises(NotImplementedError, match="Hybrid prediction"):
+        HybridProtonPredictor().predict("CCO")
+
+
+def test_rule_based_predictor_matches_backward_compatible_function():
+    predictor_predictions = RuleBasedProtonPredictor().predict("CCO")
+    function_predictions = predict_1h_shifts("CCO")
+
+    assert predictor_predictions.equals(function_predictions)
 
 
 def test_ethanol_predictions_include_expected_shift_ranges():
@@ -46,6 +81,22 @@ def test_acetone_prediction_is_carbonyl_adjacent_methyl():
 def test_predict_1h_shifts_raises_value_error_for_invalid_smiles():
     with pytest.raises(ValueError, match="Invalid SMILES string"):
         predict_1h_shifts("not-a-smiles")
+
+
+def test_rule_based_predictor_preserves_core_examples():
+    predictor = RuleBasedProtonPredictor()
+
+    ethanol = predictor.predict("CCO")
+    assert len(ethanol) == 3
+    assert ethanol["proton_count"].sum() == 6
+
+    benzene = predictor.predict("c1ccccc1")
+    assert len(benzene) == 1
+    assert benzene["proton_count"].sum() == 6
+
+    acetone = predictor.predict("CC(=O)C")
+    assert len(acetone) == 1
+    assert acetone["proton_count"].sum() == 6
 
 
 def test_toluene_predictions_include_benzylic_and_aromatic_groups():

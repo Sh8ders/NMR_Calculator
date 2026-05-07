@@ -20,6 +20,18 @@ def test_ethanol_plot_creates_png(tmp_path):
     assert ax.get_xlim()[0] > ax.get_xlim()[1]
 
 
+def test_plot_from_smiles_accepts_rules_method(tmp_path):
+    output_path = tmp_path / "ethanol_rules_1h_nmr.png"
+
+    fig, _ = plot_1h_spectrum_from_smiles(
+        "CCO", output_path=str(output_path), method="rules"
+    )
+    plt.close(fig)
+
+    assert output_path.exists()
+    assert output_path.stat().st_size > 0
+
+
 def test_benzene_plot_creates_png(tmp_path):
     output_path = tmp_path / "benzene_1h_nmr.png"
 

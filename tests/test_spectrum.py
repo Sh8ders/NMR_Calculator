@@ -25,6 +25,13 @@ def test_generate_peak_list_from_predictions():
     assert len(peak_list) == 3
 
 
+def test_generate_1h_peak_list_accepts_rules_method():
+    peak_list = generate_1h_peak_list("CCO", method="rules")
+
+    assert len(peak_list) == 3
+    assert peak_list["integration"].sum() == 6
+
+
 def test_ethanol_peak_list_has_expected_peaks():
     peak_list = generate_1h_peak_list("CCO")
 

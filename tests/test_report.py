@@ -28,6 +28,13 @@ def test_ethanol_report_creates_expected_files(tmp_path):
     assert "approximate rule-based estimates" in report_text
 
 
+def test_report_accepts_rules_method(tmp_path):
+    paths = generate_1h_report("CCO", str(tmp_path), method="rules")
+
+    assert (tmp_path / "report.txt").exists()
+    assert paths["report_txt"] == str(tmp_path / "report.txt")
+
+
 def test_benzene_report_creates_expected_files(tmp_path):
     paths = generate_1h_report("c1ccccc1", str(tmp_path))
 

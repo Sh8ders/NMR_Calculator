@@ -10,12 +10,20 @@ from nmr_calculator.molecule import (
     prepare_molecule,
 )
 from nmr_calculator.plotting import plot_1h_spectrum_from_smiles
-from nmr_calculator.predictor import predict_1h_shifts
+from nmr_calculator.predictor import get_predictor
 from nmr_calculator.report import generate_1h_report
 from nmr_calculator.spectrum import format_peak_label, generate_1h_peak_list
 from nmr_calculator.visualization import save_molecule_image
 
 app = typer.Typer(help="1H NMR prediction command-line tools.")
+
+
+def _method_option() -> str:
+    return typer.Option("rules", "--method", "-m", help="Prediction method.")
+
+
+def _raise_cli_error(error: NotImplementedError | ValueError) -> None:
+    raise typer.BadParameter(str(error)) from error
 
 
 @app.callback()
@@ -24,9 +32,12 @@ def main() -> None:
 
 
 @app.command()
-def predict(smiles: str) -> None:
+def predict(smiles: str, method: str = _method_option()) -> None:
     """Predict approximate rule-based 1H NMR chemical shifts."""
-    predictions = predict_1h_shifts(smiles)
+    try:
+        predictions = get_predictor(method).predict(smiles)
+    except (NotImplementedError, ValueError) as error:
+        _raise_cli_error(error)
 
     typer.echo(f"Input SMILES: {smiles}")
     typer.echo("Predicted 1H NMR chemical shifts:")
@@ -79,9 +90,12 @@ def groups(smiles: str) -> None:
 
 
 @app.command()
-def peaks(smiles: str) -> None:
+def peaks(smiles: str, method: str = _method_option()) -> None:
     """Print a sorted predicted 1H NMR peak list."""
-    peak_list = generate_1h_peak_list(smiles)
+    try:
+        peak_list = generate_1h_peak_list(smiles, method=method)
+    except (NotImplementedError, ValueError) as error:
+        _raise_cli_error(error)
 
     typer.echo(f"Input SMILES: {smiles}")
     typer.echo("Predicted 1H NMR peak list:")
@@ -93,9 +107,15 @@ def peaks(smiles: str) -> None:
 def plot(
     smiles: str,
     output: str = typer.Option(..., "--output", "-o", help="PNG output path."),
+    method: str = _method_option(),
 ) -> None:
     """Save a simple predicted 1H NMR spectrum plot."""
-    fig, _ = plot_1h_spectrum_from_smiles(smiles, output_path=output)
+    try:
+        fig, _ = plot_1h_spectrum_from_smiles(
+            smiles, output_path=output, method=method
+        )
+    except (NotImplementedError, ValueError) as error:
+        _raise_cli_error(error)
     # Close the figure after saving so repeated CLI/test calls do not leak figures.
     import matplotlib.pyplot as plt
 
@@ -130,9 +150,13 @@ def report(
     output_dir: str = typer.Option(
         ..., "--output-dir", "-o", help="Report output directory."
     ),
+    method: str = _method_option(),
 ) -> None:
     """Generate a complete 1H NMR report folder."""
-    paths = generate_1h_report(smiles, output_dir)
+    try:
+        paths = generate_1h_report(smiles, output_dir, method=method)
+    except (NotImplementedError, ValueError) as error:
+        _raise_cli_error(error)
 
     typer.echo(f"Input SMILES: {smiles}")
     typer.echo(f"Generated 1H NMR report in {paths['output_dir']}")
