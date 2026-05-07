@@ -1,3 +1,3 @@
 """Project package for the proton NMR Calculator application scaffold."""
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"

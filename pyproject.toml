@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nmr-calculator"
-version = "0.3.0"
-description = "Phase 3 scaffold for future 1H NMR proton environment grouping and prediction."
+version = "0.4.0"
+description = "Phase 4 scaffold with basic rule-based 1H NMR proton shift prediction."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

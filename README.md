@@ -2,11 +2,11 @@
 
 NMR Calculator is a Python project for future 1H NMR, proton NMR, and hydrogen NMR spectrum prediction from molecular structures.
 
-## Phase 3 Status
+## Phase 4 Status
 
-Phase 3 groups equivalent or chemically similar proton environments for later 1H NMR prediction. The project can now parse SMILES with RDKit, add explicit hydrogens, inspect hydrogen-bearing atoms, and group proton environments using RDKit symmetry classes plus simple local environment descriptors.
+Phase 4 adds basic rule-based 1H NMR chemical shift estimates for the equivalent proton environment groups created in Phase 3. The program now parses SMILES with RDKit, adds explicit hydrogens, groups proton environments, and assigns approximate ppm values and ppm ranges.
 
-This phase does not predict proton chemical shifts or generate spectra yet.
+These predictions are simple organic chemistry rule-based estimates. They are not database-backed, ML-based, or validated against nmrshiftdb2 yet, and plotted spectra are not generated in this phase.
 
 ## Installation
 
@@ -39,10 +39,22 @@ python -m pip install rdkit
 
 ## Run the CLI
 
-Check Phase 3 readiness:
+Predict approximate 1H NMR shifts:
 
 ```bash
 python -m nmr_calculator.cli predict "CCO"
+python -m nmr_calculator.cli predict "c1ccccc1"
+python -m nmr_calculator.cli predict "CC(=O)C"
+```
+
+Example ethanol prediction output:
+
+```text
+Input SMILES: CCO
+Predicted 1H NMR chemical shifts:
+  Group 1: atoms [0], 3H, alkyl CH3, ~1.2 ppm (0.8-1.8 ppm)
+  Group 2: atoms [1], 2H, heteroatom-adjacent alkyl proton, ~3.5 ppm (3.0-4.5 ppm)
+  Group 3: atoms [2], 1H, alcohol/amine/thiol exchangeable proton, ~2.5 ppm (0.5-5.5 ppm)
 ```
 
 Inspect proton-bearing atoms:
@@ -57,16 +69,6 @@ Group equivalent proton environments:
 python -m nmr_calculator.cli groups "CCO"
 python -m nmr_calculator.cli groups "c1ccccc1"
 python -m nmr_calculator.cli groups "CC(=O)C"
-```
-
-Example ethanol group output:
-
-```text
-Input SMILES: CCO
-Proton environment groups:
-  Group 1: atoms [0], 3H, alkyl CH3
-  Group 2: atoms [1], 2H, heteroatom-adjacent alkyl proton
-  Group 3: atoms [2], 1H, alcohol/amine/thiol exchangeable proton
 ```
 
 ## Run Tests

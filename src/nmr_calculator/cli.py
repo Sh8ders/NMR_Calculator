@@ -7,6 +7,7 @@ from nmr_calculator.molecule import (
     get_proton_environment_groups,
     prepare_molecule,
 )
+from nmr_calculator.predictor import predict_1h_shifts
 
 app = typer.Typer(help="1H NMR prediction command-line tools.")
 
@@ -18,10 +19,22 @@ def main() -> None:
 
 @app.command()
 def predict(smiles: str) -> None:
-    """Accept a SMILES string and report Phase 3 scaffold status."""
+    """Predict approximate rule-based 1H NMR chemical shifts."""
+    predictions = predict_1h_shifts(smiles)
+
     typer.echo(f"Input SMILES: {smiles}")
-    typer.echo("Phase 3 proton environment grouping ready.")
-    typer.echo("1H NMR prediction will be implemented in later phases.")
+    typer.echo("Predicted 1H NMR chemical shifts:")
+    for prediction in predictions.to_dict("records"):
+        typer.echo(
+            "  "
+            f"Group {prediction['group_id']}: "
+            f"atoms {prediction['atom_indices']}, "
+            f"{prediction['proton_count']}H, "
+            f"{prediction['environment_label']}, "
+            f"~{prediction['predicted_shift_ppm']:.1f} ppm "
+            f"({prediction['shift_min_ppm']:.1f}-"
+            f"{prediction['shift_max_ppm']:.1f} ppm)"
+        )
 
 
 @app.command()
