@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nmr-calculator"
+version = "0.1.0"
+description = "Phase 1 scaffold for a future 13C NMR chemical shift and spectrum prediction tool."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "typer",
+    "numpy",
+    "pandas",
+    "matplotlib",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",
+]
+
+[project.scripts]
+nmr-calculator = "nmr_calculator.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
