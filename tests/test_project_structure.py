@@ -5,7 +5,7 @@ from pathlib import Path
 def test_package_imports_successfully():
     import nmr_calculator
 
-    assert nmr_calculator.__version__ == "0.4.0"
+    assert nmr_calculator.__version__ == "0.5.0"
 
 
 def test_placeholder_modules_import_successfully():

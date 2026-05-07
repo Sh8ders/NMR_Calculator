@@ -43,3 +43,17 @@ def test_groups_command_reports_grouped_proton_environments():
     assert "3H" in result.output
     assert "2H" in result.output
     assert "1H" in result.output
+
+
+def test_peaks_command_reports_predicted_peak_list():
+    runner = CliRunner()
+
+    result = runner.invoke(app, ["peaks", "CCO"])
+
+    assert result.exit_code == 0
+    assert "Input SMILES: CCO" in result.output
+    assert "Predicted 1H NMR peak list:" in result.output
+    assert "ppm" in result.output
+    assert "3H" in result.output
+    assert "2H" in result.output
+    assert "1H" in result.output

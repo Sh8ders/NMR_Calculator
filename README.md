@@ -2,11 +2,17 @@
 
 NMR Calculator is a Python project for future 1H NMR, proton NMR, and hydrogen NMR spectrum prediction from molecular structures.
 
-## Phase 4 Status
+## Phase 5 Status
 
-Phase 4 adds basic rule-based 1H NMR chemical shift estimates for the equivalent proton environment groups created in Phase 3. The program now parses SMILES with RDKit, adds explicit hydrogens, groups proton environments, and assigns approximate ppm values and ppm ranges.
+Phase 5 converts rule-based 1H NMR shift predictions into a clean peak list. The program now parses SMILES with RDKit, groups equivalent proton environments, assigns approximate ppm values and ranges, and emits one sorted peak per predicted proton group.
 
-These predictions are simple organic chemistry rule-based estimates. They are not database-backed, ML-based, or validated against nmrshiftdb2 yet, and plotted spectra are not generated in this phase.
+Multiplicity is currently a placeholder:
+
+- exchangeable proton environments: `br s`
+- aromatic proton environments: `m`
+- all other environments: `unknown`
+
+True spin-spin splitting will be improved in a later phase. These predictions remain simple rule-based estimates; they are not database-backed, ML-based, or validated against nmrshiftdb2 yet. Spectrum plotting is not implemented in this phase.
 
 ## Installation
 
@@ -43,32 +49,31 @@ Predict approximate 1H NMR shifts:
 
 ```bash
 python -m nmr_calculator.cli predict "CCO"
-python -m nmr_calculator.cli predict "c1ccccc1"
-python -m nmr_calculator.cli predict "CC(=O)C"
 ```
 
-Example ethanol prediction output:
+Generate predicted peak lists:
+
+```bash
+python -m nmr_calculator.cli peaks "CCO"
+python -m nmr_calculator.cli peaks "c1ccccc1"
+python -m nmr_calculator.cli peaks "CC(=O)C"
+```
+
+Example ethanol peak list:
 
 ```text
 Input SMILES: CCO
-Predicted 1H NMR chemical shifts:
-  Group 1: atoms [0], 3H, alkyl CH3, ~1.2 ppm (0.8-1.8 ppm)
-  Group 2: atoms [1], 2H, heteroatom-adjacent alkyl proton, ~3.5 ppm (3.0-4.5 ppm)
-  Group 3: atoms [2], 1H, alcohol/amine/thiol exchangeable proton, ~2.5 ppm (0.5-5.5 ppm)
+Predicted 1H NMR peak list:
+  Peak 1: 3.5 ppm, 2H, unknown, heteroatom-adjacent alkyl proton
+  Peak 2: 2.5 ppm, 1H, br s, alcohol/amine/thiol exchangeable proton
+  Peak 3: 1.2 ppm, 3H, unknown, alkyl CH3
 ```
 
-Inspect proton-bearing atoms:
+Inspect proton-bearing atoms and groups:
 
 ```bash
 python -m nmr_calculator.cli inspect "CCO"
-```
-
-Group equivalent proton environments:
-
-```bash
 python -m nmr_calculator.cli groups "CCO"
-python -m nmr_calculator.cli groups "c1ccccc1"
-python -m nmr_calculator.cli groups "CC(=O)C"
 ```
 
 ## Run Tests

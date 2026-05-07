@@ -8,6 +8,7 @@ from nmr_calculator.molecule import (
     prepare_molecule,
 )
 from nmr_calculator.predictor import predict_1h_shifts
+from nmr_calculator.spectrum import format_peak_label, generate_1h_peak_list
 
 app = typer.Typer(help="1H NMR prediction command-line tools.")
 
@@ -70,6 +71,17 @@ def groups(smiles: str) -> None:
             f"{group['proton_count']}H, "
             f"{group['environment_label']}"
         )
+
+
+@app.command()
+def peaks(smiles: str) -> None:
+    """Print a sorted predicted 1H NMR peak list."""
+    peak_list = generate_1h_peak_list(smiles)
+
+    typer.echo(f"Input SMILES: {smiles}")
+    typer.echo("Predicted 1H NMR peak list:")
+    for peak in peak_list.to_dict("records"):
+        typer.echo(f"  Peak {peak['peak_id']}: {format_peak_label(peak)}")
 
 
 if __name__ == "__main__":
