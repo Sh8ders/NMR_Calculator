@@ -2,15 +2,19 @@
 
 NMR Calculator is a Python project for future 1H NMR, proton NMR, and hydrogen NMR spectrum prediction from molecular structures.
 
-## Phase 7 Status
+## Phase 8 Status
 
-Phase 7 adds RDKit molecule structure image generation. The program can now parse SMILES, inspect and group proton environments, estimate rule-based 1H NMR shifts, generate peak lists, save simple spectrum plots, and save molecule structure PNGs.
+Phase 8 adds complete report folder generation. The program can now parse SMILES, inspect and group proton environments, estimate rule-based 1H NMR shifts, generate peak lists, save molecule and spectrum PNGs, and write a text summary report from one CLI command.
 
-Molecule images include RDKit atom index labels by default. These labels are useful because the `predict` and `groups` commands list atom indices for proton environments.
+Generated report folders include:
 
-The NMR predictions and plots remain approximate and rule-based. Multiplicity and splitting are still placeholder-level, and database, ML, nmrshiftdb2, and true spin-spin splitting support are not implemented yet.
+- `predictions.csv`
+- `peaks.csv`
+- `molecule.png`
+- `spectrum.png`
+- `report.txt`
 
-Generated PNG files should usually not be committed to the repository unless they are intentionally added as documentation examples.
+Generated report folders should usually not be committed. Predictions remain approximate and rule-based; database, ML, nmrshiftdb2, improved multiplicity, and true spin-spin splitting support are not implemented yet.
 
 ## Installation
 
@@ -43,36 +47,19 @@ python -m pip install rdkit
 
 ## Run the CLI
 
-Predict approximate 1H NMR shifts:
+Generate a complete report folder:
+
+```bash
+python -m nmr_calculator.cli report "CCO" --output-dir reports/ethanol
+```
+
+Other useful commands:
 
 ```bash
 python -m nmr_calculator.cli predict "CCO"
-```
-
-Generate predicted peak lists and spectrum PNGs:
-
-```bash
 python -m nmr_calculator.cli peaks "CCO"
 python -m nmr_calculator.cli plot "CCO" --output ethanol_1h_nmr.png
-```
-
-Generate molecule structure PNGs:
-
-```bash
 python -m nmr_calculator.cli molecule-image "CCO" --output ethanol_structure.png
-python -m nmr_calculator.cli molecule-image "c1ccccc1" --output benzene_structure.png
-python -m nmr_calculator.cli molecule-image "CC(=O)C" --output acetone_structure.png
-```
-
-To hide atom indices:
-
-```bash
-python -m nmr_calculator.cli molecule-image "CCO" --output ethanol_structure.png --no-atom-indices
-```
-
-Inspect proton-bearing atoms and groups:
-
-```bash
 python -m nmr_calculator.cli inspect "CCO"
 python -m nmr_calculator.cli groups "CCO"
 ```

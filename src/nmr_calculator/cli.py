@@ -1,5 +1,7 @@
 """Command-line interface for NMR Calculator."""
 
+from pathlib import Path
+
 import typer
 
 from nmr_calculator.molecule import (
@@ -9,6 +11,7 @@ from nmr_calculator.molecule import (
 )
 from nmr_calculator.plotting import plot_1h_spectrum_from_smiles
 from nmr_calculator.predictor import predict_1h_shifts
+from nmr_calculator.report import generate_1h_report
 from nmr_calculator.spectrum import format_peak_label, generate_1h_peak_list
 from nmr_calculator.visualization import save_molecule_image
 
@@ -119,6 +122,29 @@ def molecule_image(
 
     typer.echo(f"Input SMILES: {smiles}")
     typer.echo(f"Saved molecule image to {saved_path}")
+
+
+@app.command()
+def report(
+    smiles: str,
+    output_dir: str = typer.Option(
+        ..., "--output-dir", "-o", help="Report output directory."
+    ),
+) -> None:
+    """Generate a complete 1H NMR report folder."""
+    paths = generate_1h_report(smiles, output_dir)
+
+    typer.echo(f"Input SMILES: {smiles}")
+    typer.echo(f"Generated 1H NMR report in {paths['output_dir']}")
+    typer.echo("Created:")
+    for key in [
+        "predictions_csv",
+        "peaks_csv",
+        "molecule_png",
+        "spectrum_png",
+        "report_txt",
+    ]:
+        typer.echo(f"- {Path(paths[key]).name}")
 
 
 if __name__ == "__main__":

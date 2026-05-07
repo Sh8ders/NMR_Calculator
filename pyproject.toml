@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nmr-calculator"
-version = "0.7.0"
-description = "Phase 7 scaffold with molecule structure image generation."
+version = "0.8.0"
+description = "Phase 8 scaffold with complete 1H NMR report folder generation."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

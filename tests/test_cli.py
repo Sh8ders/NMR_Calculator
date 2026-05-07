@@ -87,3 +87,25 @@ def test_molecule_image_command_saves_png(tmp_path):
     assert "Saved molecule image" in result.output
     assert output_path.exists()
     assert output_path.stat().st_size > 0
+
+
+def test_report_command_generates_report_files(tmp_path):
+    runner = CliRunner()
+    output_dir = tmp_path / "ethanol_report"
+
+    result = runner.invoke(
+        app, ["report", "CCO", "--output-dir", str(output_dir)]
+    )
+
+    assert result.exit_code == 0
+    assert "Input SMILES: CCO" in result.output
+    assert "Generated 1H NMR report" in result.output
+    for filename in [
+        "predictions.csv",
+        "peaks.csv",
+        "molecule.png",
+        "spectrum.png",
+        "report.txt",
+    ]:
+        assert filename in result.output
+        assert (output_dir / filename).exists()
