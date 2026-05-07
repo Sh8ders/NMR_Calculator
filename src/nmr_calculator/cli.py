@@ -10,6 +10,7 @@ from nmr_calculator.molecule import (
 from nmr_calculator.plotting import plot_1h_spectrum_from_smiles
 from nmr_calculator.predictor import predict_1h_shifts
 from nmr_calculator.spectrum import format_peak_label, generate_1h_peak_list
+from nmr_calculator.visualization import save_molecule_image
 
 app = typer.Typer(help="1H NMR prediction command-line tools.")
 
@@ -99,6 +100,25 @@ def plot(
 
     typer.echo(f"Input SMILES: {smiles}")
     typer.echo(f"Saved predicted 1H NMR spectrum to {output}")
+
+
+@app.command()
+def molecule_image(
+    smiles: str,
+    output: str = typer.Option(..., "--output", "-o", help="PNG output path."),
+    show_atom_indices: bool = typer.Option(
+        True,
+        "--atom-indices/--no-atom-indices",
+        help="Show RDKit atom index labels.",
+    ),
+) -> None:
+    """Save a molecule structure image."""
+    saved_path = save_molecule_image(
+        smiles, output, show_atom_indices=show_atom_indices
+    )
+
+    typer.echo(f"Input SMILES: {smiles}")
+    typer.echo(f"Saved molecule image to {saved_path}")
 
 
 if __name__ == "__main__":

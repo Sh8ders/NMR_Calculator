@@ -72,3 +72,18 @@ def test_plot_command_saves_predicted_spectrum(tmp_path):
     assert "Saved predicted 1H NMR spectrum" in result.output
     assert output_path.exists()
     assert output_path.stat().st_size > 0
+
+
+def test_molecule_image_command_saves_png(tmp_path):
+    runner = CliRunner()
+    output_path = tmp_path / "ethanol_structure.png"
+
+    result = runner.invoke(
+        app, ["molecule-image", "CCO", "--output", str(output_path)]
+    )
+
+    assert result.exit_code == 0
+    assert "Input SMILES: CCO" in result.output
+    assert "Saved molecule image" in result.output
+    assert output_path.exists()
+    assert output_path.stat().st_size > 0
