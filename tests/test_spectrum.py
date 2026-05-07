@@ -35,7 +35,7 @@ def test_ethanol_peak_list_has_expected_peaks():
     assert 2 in set(peak_list["integration"])
 
     exchangeable_peak = peak_list[
-        peak_list["environment_label"] == "alcohol/amine/thiol exchangeable proton"
+        peak_list["environment_label"] == "alcohol exchangeable proton"
     ].iloc[0]
     assert exchangeable_peak.integration == 1
     assert exchangeable_peak.multiplicity == "br s"

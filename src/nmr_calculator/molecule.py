@@ -3,6 +3,8 @@
 from rdkit import Chem
 from rdkit.Chem.rdchem import Atom, BondType, HybridizationType, Mol
 
+HALOGEN_ATOMIC_NUMBERS = {9, 17, 35, 53}
+
 
 def parse_molecule(smiles: str) -> Mol:
     """Parse a SMILES string into an RDKit molecule."""
@@ -112,31 +114,44 @@ def label_proton_environment(mol: Mol, atom_index: int) -> str:
 
     symbol = atom.GetSymbol()
     if symbol in {"O", "N", "S"}:
-        return _exchangeable_label(symbol)
+        return _exchangeable_label(atom)
 
     if symbol != "C":
         return "unknown proton environment"
 
-    if _is_aldehyde_carbon(atom):
+    if is_aldehyde_proton(mol, atom_index):
         return "aldehyde proton"
 
     if atom.GetIsAromatic():
         return "aromatic proton"
 
-    if _has_alkene_bond(atom):
-        return "alkene proton"
+    if is_terminal_alkyne_proton(mol, atom_index):
+        return "terminal alkyne proton"
 
-    if _is_heteroatom_adjacent(atom):
+    if is_vinylic(mol, atom_index):
+        return "vinylic/alkene proton"
+
+    if is_alpha_to_carbonyl(mol, atom_index):
+        return "alkyl alpha to carbonyl"
+
+    attached_heteroatom_type = get_attached_heteroatom_type(mol, atom_index)
+    if attached_heteroatom_type:
         return "heteroatom-adjacent alkyl proton"
+
+    if is_benzylic(mol, atom_index):
+        return "benzylic proton"
+
+    if is_allylic(mol, atom_index):
+        return "allylic proton"
 
     if atom.GetHybridization() == HybridizationType.SP3:
         hydrogen_count = _attached_hydrogen_count(atom)
         if hydrogen_count == 3:
-            return "alkyl CH3"
+            return "simple alkyl CH3"
         if hydrogen_count == 2:
-            return "alkyl CH2"
+            return "simple alkyl CH2"
         if hydrogen_count == 1:
-            return "alkyl CH"
+            return "simple alkyl CH"
 
     return "unknown proton environment"
 
@@ -144,6 +159,80 @@ def label_proton_environment(mol: Mol, atom_index: int) -> str:
 def is_exchangeable_proton_environment(environment_label: str) -> bool:
     """Return whether a label describes exchangeable OH, NH, or SH protons."""
     return "exchangeable proton" in environment_label
+
+
+def is_alpha_to_carbonyl(mol: Mol, atom_index: int) -> bool:
+    """Return whether an atom is bonded to a carbonyl carbon."""
+    atom = mol.GetAtomWithIdx(atom_index)
+    if atom.GetAtomicNum() == 1:
+        return False
+
+    return any(_is_carbonyl_carbon(neighbor) for neighbor in atom.GetNeighbors())
+
+
+def is_benzylic(mol: Mol, atom_index: int) -> bool:
+    """Return whether an sp3 carbon is directly attached to an aromatic ring."""
+    atom = mol.GetAtomWithIdx(atom_index)
+    if atom.GetSymbol() != "C" or atom.GetIsAromatic():
+        return False
+    if atom.GetHybridization() != HybridizationType.SP3:
+        return False
+
+    return any(neighbor.GetIsAromatic() for neighbor in atom.GetNeighbors())
+
+
+def is_allylic(mol: Mol, atom_index: int) -> bool:
+    """Return whether an sp3 carbon is directly attached to an alkene carbon."""
+    atom = mol.GetAtomWithIdx(atom_index)
+    if atom.GetSymbol() != "C" or atom.GetHybridization() != HybridizationType.SP3:
+        return False
+
+    return any(_has_alkene_bond(neighbor) for neighbor in atom.GetNeighbors())
+
+
+def is_vinylic(mol: Mol, atom_index: int) -> bool:
+    """Return whether a proton-bearing carbon is part of a C=C bond."""
+    atom = mol.GetAtomWithIdx(atom_index)
+    if atom.GetSymbol() != "C":
+        return False
+
+    return _has_alkene_bond(atom)
+
+
+def is_terminal_alkyne_proton(mol: Mol, atom_index: int) -> bool:
+    """Return whether a proton-bearing carbon is part of a terminal alkyne."""
+    atom = mol.GetAtomWithIdx(atom_index)
+    if atom.GetSymbol() != "C":
+        return False
+
+    return _has_alkyne_bond(atom) and _attached_hydrogen_count(atom) > 0
+
+
+def is_aldehyde_proton(mol: Mol, atom_index: int) -> bool:
+    """Return whether an atom is an aldehyde carbon bearing a proton."""
+    atom = mol.GetAtomWithIdx(atom_index)
+    return _is_aldehyde_carbon(atom)
+
+
+def is_carboxylic_acid_proton(mol: Mol, atom_index: int) -> bool:
+    """Return whether an oxygen atom is a protonated carboxylic acid oxygen."""
+    atom = mol.GetAtomWithIdx(atom_index)
+    if atom.GetSymbol() != "O" or _attached_hydrogen_count(atom) < 1:
+        return False
+
+    return any(_is_carbonyl_carbon(neighbor) for neighbor in atom.GetNeighbors())
+
+
+def get_attached_heteroatom_type(mol: Mol, atom_index: int) -> str | None:
+    """Return the type of directly attached heteroatom, if present."""
+    atom = mol.GetAtomWithIdx(atom_index)
+    for neighbor in atom.GetNeighbors():
+        atomic_num = neighbor.GetAtomicNum()
+        if atomic_num in HALOGEN_ATOMIC_NUMBERS:
+            return "halogen"
+        if neighbor.GetSymbol() in {"O", "N", "S"}:
+            return neighbor.GetSymbol()
+    return None
 
 
 def build_proton_group_key(
@@ -184,13 +273,16 @@ def _attached_hydrogen_count(atom: Atom) -> int:
     return explicit_hydrogens + atom.GetNumImplicitHs()
 
 
-def _exchangeable_label(symbol: str) -> str:
-    labels = {
-        "O": "alcohol/amine/thiol exchangeable proton",
-        "N": "alcohol/amine/thiol exchangeable proton",
-        "S": "alcohol/amine/thiol exchangeable proton",
-    }
-    return labels.get(symbol, "unknown proton environment")
+def _exchangeable_label(atom: Atom) -> str:
+    if atom.GetSymbol() == "O":
+        if is_carboxylic_acid_proton(atom.GetOwningMol(), atom.GetIdx()):
+            return "carboxylic acid exchangeable proton"
+        return "alcohol exchangeable proton"
+    if atom.GetSymbol() == "N":
+        return "amine exchangeable proton"
+    if atom.GetSymbol() == "S":
+        return "thiol exchangeable proton"
+    return "unknown proton environment"
 
 
 def _is_aldehyde_carbon(atom: Atom) -> bool:
@@ -215,8 +307,25 @@ def _has_alkene_bond(atom: Atom) -> bool:
     )
 
 
-def _is_heteroatom_adjacent(atom: Atom) -> bool:
+def _has_alkyne_bond(atom: Atom) -> bool:
     return any(
-        neighbor.GetAtomicNum() not in {1, 6}
+        neighbor.GetSymbol() == "C"
+        and atom.GetOwningMol().GetBondBetweenAtoms(
+            atom.GetIdx(), neighbor.GetIdx()
+        ).GetBondType()
+        == BondType.TRIPLE
+        for neighbor in atom.GetNeighbors()
+    )
+
+
+def _is_carbonyl_carbon(atom: Atom) -> bool:
+    if atom.GetSymbol() != "C":
+        return False
+
+    mol = atom.GetOwningMol()
+    return any(
+        neighbor.GetSymbol() == "O"
+        and mol.GetBondBetweenAtoms(atom.GetIdx(), neighbor.GetIdx()).GetBondType()
+        == BondType.DOUBLE
         for neighbor in atom.GetNeighbors()
     )

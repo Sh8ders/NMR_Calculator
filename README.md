@@ -2,19 +2,13 @@
 
 NMR Calculator is a Python project for future 1H NMR, proton NMR, and hydrogen NMR spectrum prediction from molecular structures.
 
-## Phase 8 Status
+## Phase 9 Status
 
-Phase 8 adds complete report folder generation. The program can now parse SMILES, inspect and group proton environments, estimate rule-based 1H NMR shifts, generate peak lists, save molecule and spectrum PNGs, and write a text summary report from one CLI command.
+Phase 9 improves the rule-based 1H NMR predictor with better functional group and proton environment detection. The current rules distinguish simple alkyl, heteroatom-adjacent, alpha-to-carbonyl, benzylic, allylic, vinylic, aromatic, aldehyde, terminal alkyne, alcohol, amine, thiol, and carboxylic acid proton environments.
 
-Generated report folders include:
+Predictions are still approximate rule-based estimates. Database prediction, ML prediction, nmrshiftdb2 support, improved multiplicity, and true spin-spin splitting are not implemented yet.
 
-- `predictions.csv`
-- `peaks.csv`
-- `molecule.png`
-- `spectrum.png`
-- `report.txt`
-
-Generated report folders should usually not be committed. Predictions remain approximate and rule-based; database, ML, nmrshiftdb2, improved multiplicity, and true spin-spin splitting support are not implemented yet.
+The existing workflow still supports prediction tables, peak lists, spectrum PNGs, molecule PNGs, and complete report folders.
 
 ## Installation
 
@@ -47,22 +41,31 @@ python -m pip install rdkit
 
 ## Run the CLI
 
+Try improved rule-based predictions:
+
+```bash
+python -m nmr_calculator.cli predict "Cc1ccccc1"
+python -m nmr_calculator.cli predict "CC=O"
+python -m nmr_calculator.cli predict "CC(=O)O"
+```
+
 Generate a complete report folder:
 
 ```bash
-python -m nmr_calculator.cli report "CCO" --output-dir reports/ethanol
+python -m nmr_calculator.cli report "Cc1ccccc1" --output-dir reports/toluene
 ```
 
 Other useful commands:
 
 ```bash
-python -m nmr_calculator.cli predict "CCO"
 python -m nmr_calculator.cli peaks "CCO"
 python -m nmr_calculator.cli plot "CCO" --output ethanol_1h_nmr.png
 python -m nmr_calculator.cli molecule-image "CCO" --output ethanol_structure.png
 python -m nmr_calculator.cli inspect "CCO"
 python -m nmr_calculator.cli groups "CCO"
 ```
+
+Generated reports and PNGs should usually not be committed.
 
 ## Run Tests
 

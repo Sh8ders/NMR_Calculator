@@ -29,7 +29,7 @@ def test_inspect_command_reports_proton_environments():
     assert "Hydrogen-bearing atoms:" in result.output
     assert "alkyl CH3" in result.output
     assert "heteroatom-adjacent alkyl proton" in result.output
-    assert "alcohol/amine/thiol exchangeable proton" in result.output
+    assert "alcohol exchangeable proton" in result.output
 
 
 def test_groups_command_reports_grouped_proton_environments():

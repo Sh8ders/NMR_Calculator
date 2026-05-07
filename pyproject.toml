@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nmr-calculator"
-version = "0.8.0"
-description = "Phase 8 scaffold with complete 1H NMR report folder generation."
+version = "0.9.0"
+description = "Phase 9 scaffold with improved rule-based 1H NMR environment detection."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
