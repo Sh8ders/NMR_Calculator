@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nmr-calculator"
-version = "0.5.0"
-description = "Phase 5 scaffold with sorted 1H NMR peak list generation."
+version = "0.6.0"
+description = "Phase 6 scaffold with simple simulated 1H NMR spectrum plotting."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

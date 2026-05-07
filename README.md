@@ -2,17 +2,11 @@
 
 NMR Calculator is a Python project for future 1H NMR, proton NMR, and hydrogen NMR spectrum prediction from molecular structures.
 
-## Phase 5 Status
+## Phase 6 Status
 
-Phase 5 converts rule-based 1H NMR shift predictions into a clean peak list. The program now parses SMILES with RDKit, groups equivalent proton environments, assigns approximate ppm values and ranges, and emits one sorted peak per predicted proton group.
+Phase 6 generates a simple simulated 1H NMR spectrum plot from the predicted peak list. The program now parses SMILES with RDKit, groups equivalent proton environments, estimates ppm values, generates sorted peak lists, and saves basic PNG spectrum images.
 
-Multiplicity is currently a placeholder:
-
-- exchangeable proton environments: `br s`
-- aromatic proton environments: `m`
-- all other environments: `unknown`
-
-True spin-spin splitting will be improved in a later phase. These predictions remain simple rule-based estimates; they are not database-backed, ML-based, or validated against nmrshiftdb2 yet. Spectrum plotting is not implemented in this phase.
+The plot is still rule-based and approximate. Multiplicity and splitting remain placeholder-level; each predicted proton group is plotted as one vertical signal with height based on integration. Database, ML, nmrshiftdb2, and true spin-spin splitting support are not implemented yet.
 
 ## Installation
 
@@ -55,18 +49,14 @@ Generate predicted peak lists:
 
 ```bash
 python -m nmr_calculator.cli peaks "CCO"
-python -m nmr_calculator.cli peaks "c1ccccc1"
-python -m nmr_calculator.cli peaks "CC(=O)C"
 ```
 
-Example ethanol peak list:
+Generate simulated spectrum PNGs:
 
-```text
-Input SMILES: CCO
-Predicted 1H NMR peak list:
-  Peak 1: 3.5 ppm, 2H, unknown, heteroatom-adjacent alkyl proton
-  Peak 2: 2.5 ppm, 1H, br s, alcohol/amine/thiol exchangeable proton
-  Peak 3: 1.2 ppm, 3H, unknown, alkyl CH3
+```bash
+python -m nmr_calculator.cli plot "CCO" --output ethanol_1h_nmr.png
+python -m nmr_calculator.cli plot "c1ccccc1" --output benzene_1h_nmr.png
+python -m nmr_calculator.cli plot "CC(=O)C" --output acetone_1h_nmr.png
 ```
 
 Inspect proton-bearing atoms and groups:

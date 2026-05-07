@@ -7,6 +7,7 @@ from nmr_calculator.molecule import (
     get_proton_environment_groups,
     prepare_molecule,
 )
+from nmr_calculator.plotting import plot_1h_spectrum_from_smiles
 from nmr_calculator.predictor import predict_1h_shifts
 from nmr_calculator.spectrum import format_peak_label, generate_1h_peak_list
 
@@ -82,6 +83,22 @@ def peaks(smiles: str) -> None:
     typer.echo("Predicted 1H NMR peak list:")
     for peak in peak_list.to_dict("records"):
         typer.echo(f"  Peak {peak['peak_id']}: {format_peak_label(peak)}")
+
+
+@app.command()
+def plot(
+    smiles: str,
+    output: str = typer.Option(..., "--output", "-o", help="PNG output path."),
+) -> None:
+    """Save a simple predicted 1H NMR spectrum plot."""
+    fig, _ = plot_1h_spectrum_from_smiles(smiles, output_path=output)
+    # Close the figure after saving so repeated CLI/test calls do not leak figures.
+    import matplotlib.pyplot as plt
+
+    plt.close(fig)
+
+    typer.echo(f"Input SMILES: {smiles}")
+    typer.echo(f"Saved predicted 1H NMR spectrum to {output}")
 
 
 if __name__ == "__main__":
