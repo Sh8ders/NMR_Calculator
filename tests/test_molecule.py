@@ -1,6 +1,7 @@
 import pytest
 
 from nmr_calculator.molecule import (
+    canonicalize_smiles,
     get_hydrogen_bearing_atoms,
     get_proton_environment_groups,
     label_proton_environment,
@@ -18,6 +19,16 @@ def test_valid_smiles_parses_successfully():
 def test_invalid_smiles_raises_value_error():
     with pytest.raises(ValueError, match="Invalid SMILES string"):
         parse_molecule("not-a-smiles")
+
+
+def test_canonicalize_smiles_returns_stable_non_empty_smiles():
+    assert canonicalize_smiles("CCO")
+    assert canonicalize_smiles("OCC") == canonicalize_smiles("CCO")
+
+
+def test_canonicalize_smiles_raises_value_error_for_invalid_smiles():
+    with pytest.raises(ValueError, match="Invalid SMILES string"):
+        canonicalize_smiles("not-a-smiles")
 
 
 def test_ethanol_has_expected_proton_bearing_environments():

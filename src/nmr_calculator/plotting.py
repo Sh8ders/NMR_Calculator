@@ -71,8 +71,13 @@ def plot_1h_spectrum(
 
 
 def plot_1h_spectrum_from_smiles(
-    smiles: str, output_path: str | None = None, method: str = "rules"
+    smiles: str,
+    output_path: str | None = None,
+    method: str = "rules",
+    database_path: str | None = None,
 ):
     """Generate and plot a simple predicted 1H NMR spectrum from SMILES."""
-    peak_list = generate_1h_peak_list(smiles, method=method)
+    peak_list = generate_1h_peak_list(
+        smiles, method=method, database_path=database_path
+    )
     return plot_1h_spectrum(peak_list, smiles=smiles, output_path=output_path)

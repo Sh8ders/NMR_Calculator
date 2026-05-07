@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nmr-calculator"
-version = "0.11.0"
-description = "Phase 11 scaffold with local 1H NMR shift database loading."
+version = "0.12.0"
+description = "Phase 12 scaffold with exact local CSV database 1H NMR prediction."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

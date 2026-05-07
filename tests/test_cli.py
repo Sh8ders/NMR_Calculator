@@ -161,7 +161,7 @@ def test_predict_command_shows_database_placeholder_message():
     result = runner.invoke(app, ["predict", "CCO", "--method", "database"])
 
     assert result.exit_code != 0
-    assert "Database prediction is not implemented yet" in result.output
+    assert "Database path is required" in result.output
 
 
 def test_predict_command_shows_hybrid_placeholder_message():
@@ -171,6 +171,89 @@ def test_predict_command_shows_hybrid_placeholder_message():
 
     assert result.exit_code != 0
     assert "Hybrid prediction is not implemented yet" in result.output
+
+
+def test_predict_command_accepts_database_method_with_database_path():
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "predict",
+            "CCO",
+            "--method",
+            "database",
+            "--database",
+            "tests/fixtures/test_1h_shift_database.csv",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "database" in result.output
+    assert "ppm" in result.output
+
+
+def test_peaks_command_accepts_database_method_with_database_path():
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "peaks",
+            "CCO",
+            "--method",
+            "database",
+            "--database",
+            "tests/fixtures/test_1h_shift_database.csv",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Predicted 1H NMR peak list:" in result.output
+
+
+def test_plot_command_accepts_database_method_with_database_path(tmp_path):
+    runner = CliRunner()
+    output_path = tmp_path / "ethanol_database.png"
+
+    result = runner.invoke(
+        app,
+        [
+            "plot",
+            "CCO",
+            "--output",
+            str(output_path),
+            "--method",
+            "database",
+            "--database",
+            "tests/fixtures/test_1h_shift_database.csv",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert output_path.exists()
+
+
+def test_report_command_accepts_database_method_with_database_path(tmp_path):
+    runner = CliRunner()
+    output_dir = tmp_path / "ethanol_database_report"
+
+    result = runner.invoke(
+        app,
+        [
+            "report",
+            "CCO",
+            "--output-dir",
+            str(output_dir),
+            "--method",
+            "database",
+            "--database",
+            "tests/fixtures/test_1h_shift_database.csv",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert (output_dir / "report.txt").exists()
 
 
 def test_database_check_command_validates_fixture():

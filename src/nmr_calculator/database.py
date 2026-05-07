@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from nmr_calculator.molecule import parse_molecule
+from nmr_calculator.molecule import canonicalize_smiles, parse_molecule
 
 DATABASE_COLUMNS = [
     "smiles",
@@ -41,6 +41,29 @@ def load_shift_database_csv(path: str) -> pd.DataFrame:
     except Exception as error:
         raise ValueError(f"Could not load shift database CSV: {path}") from error
     return normalize_shift_database(df)
+
+
+def add_canonical_smiles_column(df: pd.DataFrame) -> pd.DataFrame:
+    """Return a copy with a canonical_smiles column added."""
+    normalized = normalize_shift_database(df)
+    try:
+        normalized["canonical_smiles"] = normalized["smiles"].map(canonicalize_smiles)
+    except ValueError as error:
+        raise ValueError("Could not canonicalize database SMILES values.") from error
+    return normalized
+
+
+def filter_database_by_smiles(df: pd.DataFrame, smiles: str) -> pd.DataFrame:
+    """Filter database records to exact canonical SMILES matches."""
+    query_canonical_smiles = canonicalize_smiles(smiles)
+    if "canonical_smiles" not in df.columns:
+        database = add_canonical_smiles_column(df)
+    else:
+        database = df.copy()
+
+    return database[
+        database["canonical_smiles"] == query_canonical_smiles
+    ].reset_index(drop=True)
 
 
 def normalize_shift_database(df: pd.DataFrame) -> pd.DataFrame:

@@ -5,6 +5,7 @@ from typing import NamedTuple
 import pandas as pd
 from rdkit.Chem.rdchem import Atom, BondType, Mol
 
+from nmr_calculator.database import filter_database_by_smiles, load_shift_database_csv
 from nmr_calculator.molecule import (
     get_attached_heteroatom_type,
     get_proton_environment_groups,
@@ -47,15 +48,72 @@ class RuleBasedProtonPredictor(BaseProtonPredictor):
 
 
 class DatabaseProtonPredictor(BaseProtonPredictor):
-    """Placeholder for future nmrshiftdb2 database prediction."""
+    """Exact-match local CSV database predictor."""
 
     name = "database"
 
+    def __init__(self, database_path: str):
+        self.database_path = database_path
+
     def predict(self, smiles: str) -> pd.DataFrame:
-        """Raise until database prediction is implemented."""
-        raise NotImplementedError(
-            "Database prediction is not implemented yet. "
-            "It will be added in the nmrshiftdb2 phase."
+        """Predict shifts from exact local database molecule matches."""
+        database = load_shift_database_csv(self.database_path)
+        matching_records = filter_database_by_smiles(database, smiles)
+        if matching_records.empty:
+            raise ValueError(
+                "No database records found for this molecule. "
+                "Try --method hybrid to fall back to rules."
+            )
+
+        mol = prepare_molecule(smiles)
+        groups = get_proton_environment_groups(mol)
+        rows = []
+        for group in groups:
+            group_records = matching_records[
+                matching_records["atom_index"].isin(group["atom_indices"])
+            ]
+            if group_records.empty:
+                raise ValueError(
+                    "Database records do not cover all proton environments. "
+                    "Try --method hybrid."
+                )
+
+            shift_values = group_records["shift_ppm"]
+            rows.append(
+                {
+                    "group_id": group["group_id"],
+                    "atom_indices": group["atom_indices"],
+                    "proton_count": group["proton_count"],
+                    "environment_label": group["environment_label"],
+                    "predicted_shift_ppm": float(shift_values.mean()),
+                    "shift_min_ppm": float(shift_values.min()),
+                    "shift_max_ppm": float(shift_values.max()),
+                    "confidence": "high",
+                    "prediction_method": "database",
+                    "notes": "Exact molecule database match.",
+                    "database_match_count": int(len(group_records)),
+                    "database_source": ", ".join(
+                        sorted(set(group_records["source"].astype(str)))
+                    ),
+                }
+            )
+
+        return pd.DataFrame(
+            rows,
+            columns=[
+                "group_id",
+                "atom_indices",
+                "proton_count",
+                "environment_label",
+                "predicted_shift_ppm",
+                "shift_min_ppm",
+                "shift_max_ppm",
+                "confidence",
+                "prediction_method",
+                "notes",
+                "database_match_count",
+                "database_source",
+            ],
         )
 
 
@@ -82,7 +140,7 @@ SUPPORTED_PREDICTION_METHODS = {
 }
 
 
-def get_predictor(method: str) -> BaseProtonPredictor:
+def get_predictor(method: str, database_path: str | None = None) -> BaseProtonPredictor:
     """Return a proton predictor for a supported method string."""
     normalized_method = method.strip().lower()
     predictor_class = SUPPORTED_PREDICTION_METHODS.get(normalized_method)
@@ -92,12 +150,20 @@ def get_predictor(method: str) -> BaseProtonPredictor:
             f"Unknown prediction method: {method!r}. "
             f"Supported methods: {supported_methods}."
         )
+
+    if predictor_class is DatabaseProtonPredictor:
+        if database_path is None:
+            raise ValueError("Database path is required for database prediction.")
+        return predictor_class(database_path)
+
     return predictor_class()
 
 
-def predict_1h_shifts(smiles: str) -> pd.DataFrame:
+def predict_1h_shifts(
+    smiles: str, method: str = "rules", database_path: str | None = None
+) -> pd.DataFrame:
     """Predict approximate 1H NMR shifts for grouped proton environments."""
-    return RuleBasedProtonPredictor().predict(smiles)
+    return get_predictor(method, database_path=database_path).predict(smiles)
 
 
 def _predict_1h_shifts_with_rules(smiles: str) -> pd.DataFrame:

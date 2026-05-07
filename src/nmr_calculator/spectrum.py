@@ -51,9 +51,11 @@ def generate_peak_list(predictions: pd.DataFrame) -> pd.DataFrame:
     return peak_list
 
 
-def generate_1h_peak_list(smiles: str, method: str = "rules") -> pd.DataFrame:
+def generate_1h_peak_list(
+    smiles: str, method: str = "rules", database_path: str | None = None
+) -> pd.DataFrame:
     """Generate a predicted 1H NMR peak list from a SMILES string."""
-    predictions = get_predictor(method).predict(smiles)
+    predictions = get_predictor(method, database_path=database_path).predict(smiles)
     return generate_peak_list(predictions)
 
 

@@ -32,6 +32,21 @@ def test_plot_from_smiles_accepts_rules_method(tmp_path):
     assert output_path.stat().st_size > 0
 
 
+def test_plot_from_smiles_accepts_database_method(tmp_path):
+    output_path = tmp_path / "ethanol_database_1h_nmr.png"
+
+    fig, _ = plot_1h_spectrum_from_smiles(
+        "CCO",
+        output_path=str(output_path),
+        method="database",
+        database_path="tests/fixtures/test_1h_shift_database.csv",
+    )
+    plt.close(fig)
+
+    assert output_path.exists()
+    assert output_path.stat().st_size > 0
+
+
 def test_benzene_plot_creates_png(tmp_path):
     output_path = tmp_path / "benzene_1h_nmr.png"
 

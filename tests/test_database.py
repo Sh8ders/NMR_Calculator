@@ -5,6 +5,8 @@ import pytest
 
 from nmr_calculator.database import (
     DATABASE_COLUMNS,
+    add_canonical_smiles_column,
+    filter_database_by_smiles,
     load_database_cache,
     load_nmrshiftdb2_sdf,
     load_shift_database_csv,
@@ -22,6 +24,26 @@ def test_load_shift_database_csv_loads_fixture():
     assert len(database) == 6
     assert pd.api.types.is_integer_dtype(database["atom_index"])
     assert pd.api.types.is_float_dtype(database["shift_ppm"])
+
+
+def test_add_canonical_smiles_column_adds_expected_column():
+    database = load_shift_database_csv(str(FIXTURE_PATH))
+    database_with_canonical = add_canonical_smiles_column(database)
+
+    assert "canonical_smiles" in database_with_canonical.columns
+    assert database_with_canonical["canonical_smiles"].notna().all()
+
+
+def test_filter_database_by_smiles_returns_exact_canonical_matches():
+    database = load_shift_database_csv(str(FIXTURE_PATH))
+
+    ethanol = filter_database_by_smiles(database, "OCC")
+    benzene = filter_database_by_smiles(database, "c1ccccc1")
+    missing = filter_database_by_smiles(database, "C=C")
+
+    assert len(ethanol) == 3
+    assert len(benzene) == 1
+    assert missing.empty
 
 
 def test_missing_required_column_raises_value_error():

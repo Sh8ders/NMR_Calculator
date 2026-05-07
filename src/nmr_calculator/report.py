@@ -11,13 +11,16 @@ from nmr_calculator.visualization import save_molecule_image
 
 
 def generate_1h_report(
-    smiles: str, output_dir: str, method: str = "rules"
+    smiles: str,
+    output_dir: str,
+    method: str = "rules",
+    database_path: str | None = None,
 ) -> dict[str, str]:
     """Generate a complete 1H NMR report folder for a SMILES string."""
     report_dir = Path(output_dir)
     report_dir.mkdir(parents=True, exist_ok=True)
 
-    predictions = get_predictor(method).predict(smiles)
+    predictions = get_predictor(method, database_path=database_path).predict(smiles)
     peak_list = generate_peak_list(predictions)
 
     predictions_csv = report_dir / "predictions.csv"

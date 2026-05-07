@@ -8,13 +8,17 @@ from nmr_calculator.predictor import (
     predict_1h_shifts,
 )
 
+FIXTURE_PATH = "tests/fixtures/test_1h_shift_database.csv"
+
 
 def test_get_predictor_returns_expected_predictor_classes():
     assert isinstance(get_predictor("rules"), RuleBasedProtonPredictor)
     assert isinstance(get_predictor("rule"), RuleBasedProtonPredictor)
     assert isinstance(get_predictor("rule-based"), RuleBasedProtonPredictor)
-    assert isinstance(get_predictor("database"), DatabaseProtonPredictor)
-    assert isinstance(get_predictor("db"), DatabaseProtonPredictor)
+    assert isinstance(
+        get_predictor("database", database_path=FIXTURE_PATH), DatabaseProtonPredictor
+    )
+    assert isinstance(get_predictor("db", database_path=FIXTURE_PATH), DatabaseProtonPredictor)
     assert isinstance(get_predictor("hybrid"), HybridProtonPredictor)
 
 
@@ -24,11 +28,13 @@ def test_get_predictor_rejects_unknown_method():
 
 
 def test_placeholder_predictors_raise_not_implemented():
-    with pytest.raises(NotImplementedError, match="Database prediction"):
-        DatabaseProtonPredictor().predict("CCO")
-
     with pytest.raises(NotImplementedError, match="Hybrid prediction"):
         HybridProtonPredictor().predict("CCO")
+
+
+def test_get_predictor_requires_database_path_for_database_method():
+    with pytest.raises(ValueError, match="Database path is required"):
+        get_predictor("database")
 
 
 def test_rule_based_predictor_matches_backward_compatible_function():
@@ -36,6 +42,44 @@ def test_rule_based_predictor_matches_backward_compatible_function():
     function_predictions = predict_1h_shifts("CCO")
 
     assert predictor_predictions.equals(function_predictions)
+
+
+def test_database_predictor_predicts_exact_ethanol_matches():
+    predictions = DatabaseProtonPredictor(FIXTURE_PATH).predict("CCO")
+
+    assert len(predictions) == 3
+    assert predictions["proton_count"].sum() == 6
+    assert set(predictions["prediction_method"]) == {"database"}
+    assert (predictions["database_match_count"] >= 1).all()
+
+    ch3 = _row_for_label(predictions, "simple alkyl CH3")
+    ch2 = _row_for_label(predictions, "heteroatom-adjacent alkyl proton")
+    oh = _row_for_label(predictions, "alcohol exchangeable proton")
+
+    assert ch3.predicted_shift_ppm == pytest.approx(1.2)
+    assert ch2.predicted_shift_ppm == pytest.approx(3.6)
+    assert oh.predicted_shift_ppm == pytest.approx(2.5)
+
+
+def test_database_predictor_predicts_benzene_match():
+    predictions = DatabaseProtonPredictor(FIXTURE_PATH).predict("c1ccccc1")
+
+    assert len(predictions) == 1
+    assert predictions.iloc[0].proton_count == 6
+    assert predictions.iloc[0].predicted_shift_ppm == pytest.approx(7.2)
+
+
+def test_database_predictor_predicts_acetone_match():
+    predictions = DatabaseProtonPredictor(FIXTURE_PATH).predict("CC(=O)C")
+
+    assert len(predictions) == 1
+    assert predictions.iloc[0].proton_count == 6
+    assert predictions.iloc[0].predicted_shift_ppm == pytest.approx(2.2)
+
+
+def test_database_predictor_raises_for_missing_records():
+    with pytest.raises(ValueError, match="No database records found"):
+        DatabaseProtonPredictor(FIXTURE_PATH).predict("C=C")
 
 
 def test_ethanol_predictions_include_expected_shift_ranges():

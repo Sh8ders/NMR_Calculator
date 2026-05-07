@@ -18,6 +18,12 @@ def parse_molecule(smiles: str) -> Mol:
     return mol
 
 
+def canonicalize_smiles(smiles: str) -> str:
+    """Return the RDKit canonical SMILES for a valid SMILES string."""
+    mol = parse_molecule(smiles)
+    return Chem.MolToSmiles(mol, canonical=True)
+
+
 def prepare_molecule(smiles: str) -> Mol:
     """Parse a SMILES string and add explicit hydrogens for proton inspection."""
     mol = parse_molecule(smiles)

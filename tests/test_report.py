@@ -35,6 +35,18 @@ def test_report_accepts_rules_method(tmp_path):
     assert paths["report_txt"] == str(tmp_path / "report.txt")
 
 
+def test_report_accepts_database_method(tmp_path):
+    paths = generate_1h_report(
+        "CCO",
+        str(tmp_path),
+        method="database",
+        database_path="tests/fixtures/test_1h_shift_database.csv",
+    )
+
+    assert (tmp_path / "predictions.csv").exists()
+    assert paths["report_txt"] == str(tmp_path / "report.txt")
+
+
 def test_benzene_report_creates_expected_files(tmp_path):
     paths = generate_1h_report("c1ccccc1", str(tmp_path))
 

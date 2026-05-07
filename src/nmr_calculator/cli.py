@@ -23,6 +23,10 @@ def _method_option() -> str:
     return typer.Option("rules", "--method", "-m", help="Prediction method.")
 
 
+def _database_option() -> str | None:
+    return typer.Option(None, "--database", help="Local shift database CSV path.")
+
+
 def _raise_cli_error(error: NotImplementedError | ValueError) -> None:
     raise typer.BadParameter(str(error)) from error
 
@@ -40,15 +44,20 @@ def main() -> None:
 
 
 @app.command()
-def predict(smiles: str, method: str = _method_option()) -> None:
+def predict(
+    smiles: str,
+    method: str = _method_option(),
+    database_path: str | None = _database_option(),
+) -> None:
     """Predict approximate rule-based 1H NMR chemical shifts."""
     try:
-        predictions = get_predictor(method).predict(smiles)
+        predictions = get_predictor(method, database_path=database_path).predict(smiles)
     except (NotImplementedError, ValueError) as error:
         _raise_cli_error(error)
 
     typer.echo(f"Input SMILES: {smiles}")
     typer.echo("Predicted 1H NMR chemical shifts:")
+    typer.echo(f"Prediction method: {method}")
     for prediction in predictions.to_dict("records"):
         typer.echo(
             "  "
@@ -98,10 +107,16 @@ def groups(smiles: str) -> None:
 
 
 @app.command()
-def peaks(smiles: str, method: str = _method_option()) -> None:
+def peaks(
+    smiles: str,
+    method: str = _method_option(),
+    database_path: str | None = _database_option(),
+) -> None:
     """Print a sorted predicted 1H NMR peak list."""
     try:
-        peak_list = generate_1h_peak_list(smiles, method=method)
+        peak_list = generate_1h_peak_list(
+            smiles, method=method, database_path=database_path
+        )
     except (NotImplementedError, ValueError) as error:
         _raise_cli_error(error)
 
@@ -116,11 +131,12 @@ def plot(
     smiles: str,
     output: str = typer.Option(..., "--output", "-o", help="PNG output path."),
     method: str = _method_option(),
+    database_path: str | None = _database_option(),
 ) -> None:
     """Save a simple predicted 1H NMR spectrum plot."""
     try:
         fig, _ = plot_1h_spectrum_from_smiles(
-            smiles, output_path=output, method=method
+            smiles, output_path=output, method=method, database_path=database_path
         )
     except (NotImplementedError, ValueError) as error:
         _raise_cli_error(error)
@@ -159,10 +175,13 @@ def report(
         ..., "--output-dir", "-o", help="Report output directory."
     ),
     method: str = _method_option(),
+    database_path: str | None = _database_option(),
 ) -> None:
     """Generate a complete 1H NMR report folder."""
     try:
-        paths = generate_1h_report(smiles, output_dir, method=method)
+        paths = generate_1h_report(
+            smiles, output_dir, method=method, database_path=database_path
+        )
     except (NotImplementedError, ValueError) as error:
         _raise_cli_error(error)
 
