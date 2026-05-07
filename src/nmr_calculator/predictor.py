@@ -1,2 +1,1 @@
-"""Future 13C NMR chemical shift prediction interfaces and implementations."""
-
+"""Future 1H NMR proton chemical shift prediction interfaces and implementations."""

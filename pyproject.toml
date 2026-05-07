@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nmr-calculator"
-version = "0.1.0"
-description = "Phase 1 scaffold for a future 13C NMR chemical shift and spectrum prediction tool."
+version = "0.2.0"
+description = "Phase 2 scaffold for a future 1H NMR proton chemical shift and spectrum prediction tool."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -13,6 +13,7 @@ dependencies = [
     "numpy",
     "pandas",
     "matplotlib",
+    "rdkit",
 ]
 
 [project.optional-dependencies]
@@ -30,4 +31,3 @@ where = ["src"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
-
