@@ -4,7 +4,13 @@ from pathlib import Path
 
 import typer
 
-from nmr_calculator.database import load_shift_database_csv, save_database_cache
+from nmr_calculator.database import (
+    download_nmrshiftdb2_data,
+    inspect_sdf_properties,
+    load_nmrshiftdb2_sdf_with_stats,
+    load_shift_database_csv,
+    save_database_cache,
+)
 from nmr_calculator.molecule import (
     get_hydrogen_bearing_atoms,
     get_proton_environment_groups,
@@ -27,7 +33,7 @@ def _database_option() -> str | None:
     return typer.Option(None, "--database", help="Local shift database CSV path.")
 
 
-def _raise_cli_error(error: NotImplementedError | ValueError) -> None:
+def _raise_cli_error(error: NotImplementedError | RuntimeError | ValueError) -> None:
     raise typer.BadParameter(str(error)) from error
 
 
@@ -223,6 +229,66 @@ def database_cache(
 
     typer.echo(f"Loaded database: {path}")
     typer.echo(f"Saved normalized database cache to {saved_path}")
+
+
+@app.command()
+def nmrshiftdb2_download(
+    output: str = typer.Option(..., "--output", "-o", help="Raw SD output path."),
+) -> None:
+    """Download the public nmrshiftdb2 SD/NMReDATA file."""
+    try:
+        saved_path = download_nmrshiftdb2_data(output)
+    except RuntimeError as error:
+        _raise_cli_error(error)
+
+    typer.echo(f"Saved nmrshiftdb2 data to {saved_path}")
+
+
+@app.command()
+def nmrshiftdb2_import(
+    path: str,
+    output: str = typer.Option(..., "--output", "-o", help="Processed CSV path."),
+) -> None:
+    """Import nmrshiftdb2 SD/NMReDATA 1H assignments into CSV format."""
+    try:
+        database, stats = load_nmrshiftdb2_sdf_with_stats(path)
+        saved_path = save_database_cache(database, output)
+    except ValueError as error:
+        _raise_cli_error(error)
+
+    typer.echo(f"Input path: {path}")
+    typer.echo(f"Molecules scanned: {stats.molecules_scanned}")
+    typer.echo(
+        "Molecules with 1H-like properties: "
+        f"{stats.molecules_with_1h_like_properties}"
+    )
+    typer.echo(f"Records extracted: {stats.records_extracted}")
+    typer.echo(f"Skipped records: {stats.skipped_records}")
+    typer.echo(f"Output path: {saved_path}")
+    typer.echo(f"Extracted 1H shift records: {len(database)}")
+    typer.echo(f"Unique molecules: {database['smiles'].nunique()}")
+
+
+@app.command()
+def nmrshiftdb2_inspect(
+    path: str,
+    max_molecules: int = typer.Option(
+        5, "--max-molecules", help="Maximum number of SDF molecules to inspect."
+    ),
+) -> None:
+    """Inspect SD property names and previews for nmrshiftdb2 files."""
+    molecules = inspect_sdf_properties(path, max_molecules=max_molecules)
+    typer.echo(f"Input path: {path}")
+    typer.echo(f"Molecules inspected: {len(molecules)}")
+    for molecule in molecules:
+        typer.echo("")
+        typer.echo(f"Molecule {molecule['molecule_index']}")
+        typer.echo(f"  Name: {molecule['molecule_name']}")
+        typer.echo(f"  Canonical SMILES: {molecule['canonical_smiles']}")
+        typer.echo("  Properties:")
+        for property_name in molecule["property_names"]:
+            preview = molecule["property_previews"].get(property_name, "")
+            typer.echo(f"    - {property_name}: {preview}")
 
 
 if __name__ == "__main__":

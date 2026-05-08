@@ -1,6 +1,7 @@
 from typer.testing import CliRunner
 
 from nmr_calculator.cli import app
+from nmr_calculator.database import load_shift_database_csv
 
 
 def test_predict_command_reports_rule_based_shifts():
@@ -287,3 +288,54 @@ def test_database_cache_command_writes_cache(tmp_path):
     assert "Saved normalized database cache" in result.output
     assert cache_path.exists()
     assert cache_path.stat().st_size > 0
+
+
+def test_nmrshiftdb2_import_command_writes_compatible_csv(tmp_path):
+    runner = CliRunner()
+    output_path = tmp_path / "nmrshiftdb2_1h.csv"
+
+    result = runner.invoke(
+        app,
+        [
+            "nmrshiftdb2-import",
+            "tests/fixtures/tiny_nmrshiftdb2_1h.sdf",
+            "--output",
+            str(output_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Input path: tests/fixtures/tiny_nmrshiftdb2_1h.sdf" in result.output
+    assert "Molecules scanned: 2" in result.output
+    assert "Molecules with 1H-like properties: 2" in result.output
+    assert "Records extracted: 5" in result.output
+    assert "Skipped records: 0" in result.output
+    assert f"Output path: {output_path}" in result.output
+    assert "Extracted 1H shift records: 5" in result.output
+    assert "Unique molecules: 2" in result.output
+    assert output_path.exists()
+
+    imported_database = load_shift_database_csv(str(output_path))
+    assert len(imported_database) == 5
+
+
+def test_nmrshiftdb2_inspect_command_reports_property_previews():
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "nmrshiftdb2-inspect",
+            "tests/fixtures/tiny_nmrshiftdb2_1h.sdf",
+            "--max-molecules",
+            "1",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Input path: tests/fixtures/tiny_nmrshiftdb2_1h.sdf" in result.output
+    assert "Molecules inspected: 1" in result.output
+    assert "Molecule 0" in result.output
+    assert "Name: ethanol" in result.output
+    assert "Canonical SMILES: CCO" in result.output
+    assert "NMREDATA_1D_1H: 0,1.23,CH3" in result.output
